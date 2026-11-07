@@ -9,7 +9,6 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
       autoSchemaFile: true,
       playground: true,
     }),
-    ProfilesModule
   ],
 })
 export class AppModule {}
