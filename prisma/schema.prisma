@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Profile {
+  id             String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  name           String
+  description    String           @default("")
+  skills         String[]         @default([])
+  links          Link[]
+  workExperience WorkExperience[]
+  projects       Project[]
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("profiles")
+}
+
+model Link {
+  id          String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  resourceUrl String   @map("resource_url")
+  profileId   String   @map("profile_id") @db.Uuid
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([profileId, resourceUrl])
+  @@map("links")
+}
+
+model Company {
+  id          String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  name        String
+  slug        String           @unique
+  domain      String?          @unique
+  logoUrl     String?          @map("logo_url")
+  experiences WorkExperience[]
+  createdAt DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt DateTime @updatedAt      @db.Timestamptz(3) @map("updated_at")
+
+  @@map("companies")
+}
+
+model WorkExperience {
+  id           String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  profileId    String    @map("profile_id") @db.Uuid
+  profile      Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  companyId    String?   @map("company_id") @db.Uuid
+  company      Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  companyName  String    @map("company_name")
+  position     String
+  startDate    DateTime  @map("start_date") @db.Date
+  endDate      DateTime? @map("end_date") @db.Date
+  isCurrent    Boolean   @default(false) @map("is_current")
+  achievements String[]  @default([])
+
+  @@index([profileId, startDate(sort: Desc)])
+  @@index([companyId])
+  @@map("work_experiences")
+}
+
+model Project {
+  id          String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  title       String
+  projectLink String   @map("project_link")
+  profileId   String   @map("profile_id") @db.Uuid
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([profileId])
+  @@map("projects")
+}
